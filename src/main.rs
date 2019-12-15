@@ -5,20 +5,14 @@ extern crate serde;
 extern crate serde_derive;
 
 mod git_extras;
+mod github;
 
 use git2::{Config, Repository, Status};
 use git_extras::Repo;
-use graphql_client::{GraphQLQuery, Response};
 use std::process::{Command, ExitStatus};
 use std::{env, io, process};
 
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "src/github/schema.json",
-    query_path = "src/github/queries.graphql",
-    response_derives = "Debug,Clone"
-)]
-pub struct LabelBranches;
+use github::branches_by_pr_label;
 
 fn main() {
     let mut args = env::args().skip(1);
@@ -69,7 +63,7 @@ fn main() {
         process::exit(1)
     }
 
-    let branches = match branches(github_token, repo, label) {
+    let branches = match branches_by_pr_label(github_token, repo, label) {
         Ok(branches) => branches,
         Err(e) => panic!("{}", e),
     };
@@ -78,34 +72,6 @@ fn main() {
         println!("\nMerging {}", branch);
         merge_branch(branch, &repository);
     }
-}
-
-fn branches(token: String, repo: Repo, label: String) -> Result<Vec<String>, reqwest::Error> {
-    let q = LabelBranches::build_query(label_branches::Variables {
-        owner: repo.owner,
-        name: repo.name,
-        label: label,
-    });
-
-    let client = reqwest::Client::new();
-
-    let mut res = client
-        .post("https://api.github.com/graphql")
-        .bearer_auth(token)
-        .json(&q)
-        .send()?;
-
-    let response: Response<label_branches::ResponseData> = res.json()?;
-
-    Ok(response
-        .data
-        .and_then(|x| x.repository)
-        .and_then(|x| x.pull_requests.nodes)
-        .unwrap_or(vec![])
-        .iter()
-        .cloned()
-        .filter_map(|x| x.map(|y| y.head_ref_name))
-        .collect())
 }
 
 fn merge_branch(branch: String, repository: &Repository) {
