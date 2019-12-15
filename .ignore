@@ -1,0 +1,10 @@
+# rust
+/target
+**/*.rs.bk
+
+# git
+.git/
+
+# graphviz outputs
+*.svg
+*.png

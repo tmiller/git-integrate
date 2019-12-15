@@ -1,0 +1,21 @@
+query LabelBranches($owner: String!, $name: String!, $label: String!) {
+  repository(owner: $owner, name: $name) {
+    pullRequests(states: OPEN, labels: [$label], orderBy: {field: CREATED_AT, direction: ASC}, first: 50) {
+      nodes {
+        headRefName
+      }
+    }
+  }
+}
+
+query MilestoneBranches($owner: String!, $name: String!, $milestone: Int!) {
+  repository(owner: $owner, name: $name) {
+    milestone(number: $milestone) {
+      pullRequests(states: OPEN, first: 100) {
+        nodes {
+          headRefName
+        }
+      }
+    }
+  }
+}

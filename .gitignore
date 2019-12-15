@@ -1,0 +1,10 @@
+# rust
+/target
+**/*.rs.bk
+
+# pijul
+.pijul/
+
+# graphviz outputs
+*.svg
+*.png
