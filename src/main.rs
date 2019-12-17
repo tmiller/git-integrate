@@ -12,14 +12,14 @@ use git_extras::Repo;
 use std::process::{Command, ExitStatus};
 use std::{env, io, process};
 
-use github::branches_by_pr_label;
+use github::branches_by_milestone;
 
 fn main() {
     let mut args = env::args().skip(1);
 
-    let label = match args.next() {
-        Some(label) => label,
-        None => panic!("No github label provided"),
+    let milestone = match args.next().and_then(|x| x.trim().parse().ok()) {
+        Some(milestone) => milestone,
+        None => panic!("No github milestone provided"),
     };
 
     let dest_branch = match args.next() {
@@ -63,7 +63,7 @@ fn main() {
         process::exit(1)
     }
 
-    let branches = match branches_by_pr_label(github_token, repo, label) {
+    let branches = match branches_by_milestone(github_token, repo, milestone) {
         Ok(branches) => branches,
         Err(e) => panic!("{}", e),
     };

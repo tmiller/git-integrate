@@ -18,6 +18,7 @@ pub struct LabelBranches;
 )]
 pub struct MilestoneBranches;
 
+#[allow(dead_code)]
 pub fn branches_by_pr_label(
     token: String,
     repo: Repo,
