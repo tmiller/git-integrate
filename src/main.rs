@@ -1,3 +1,4 @@
+extern crate clap;
 extern crate git2;
 extern crate graphql_client;
 extern crate reqwest;
@@ -6,6 +7,7 @@ extern crate serde_derive;
 
 mod git_extras;
 
+use clap::{App, Arg};
 use git2::{Config, Repository, Status};
 use git_extras::Repo;
 use graphql_client::{GraphQLQuery, Response};
@@ -21,17 +23,23 @@ use std::{env, io, process};
 pub struct LabelBranches;
 
 fn main() {
-    let mut args = env::args().skip(1);
+    let opts = App::new("git-integrate")
+        .arg(
+            Arg::with_name("label")
+                .value_name("LABEL")
+                .help("GitHub pull request label")
+                .index(1),
+        )
+        .arg(
+            Arg::with_name("branch")
+                .value_name("BRANCH")
+                .help("Branch to build")
+                .index(2),
+        )
+        .get_matches();
 
-    let label = match args.next() {
-        Some(label) => label,
-        None => panic!("No github label provided"),
-    };
-
-    let dest_branch = match args.next() {
-        Some(dest_branch) => dest_branch,
-        None => panic!("No branch provided"),
-    };
+    let label = opts.value_of("label").expect("No github label provided");
+    let dest_branch = opts.value_of("branch").expect("No branch provided");
 
     let current_dir = match env::current_dir() {
         Ok(current_dir) => current_dir,
@@ -62,7 +70,7 @@ fn main() {
         process::exit(1)
     }
 
-    if !git_checkout(&dest_branch)
+    if !git_checkout(dest_branch)
         .expect(&format!("Could not checkout branch {}", dest_branch))
         .success()
     {
@@ -80,11 +88,11 @@ fn main() {
     }
 }
 
-fn branches(token: String, repo: Repo, label: String) -> Result<Vec<String>, reqwest::Error> {
+fn branches(token: String, repo: Repo, label: &str) -> Result<Vec<String>, reqwest::Error> {
     let q = LabelBranches::build_query(label_branches::Variables {
         owner: repo.owner,
         name: repo.name,
-        label: label,
+        label: label.to_string(),
     });
 
     let client = reqwest::Client::new();
@@ -142,7 +150,7 @@ fn git_fetch() -> io::Result<ExitStatus> {
     Command::new("git").arg("fetch").arg("--all").status()
 }
 
-fn git_checkout(branch: &String) -> io::Result<ExitStatus> {
+fn git_checkout(branch: &str) -> io::Result<ExitStatus> {
     Command::new("git")
         .arg("checkout")
         .arg("--no-track")
