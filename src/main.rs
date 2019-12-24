@@ -83,6 +83,8 @@ fn main() {
         println!("\nMerging {}", branch);
         merge_branch(branch, &repository);
     }
+
+    println!("\nFinished merging successfully!");
 }
 
 fn merge_branch(branch: String, repository: &Repository) {
@@ -99,7 +101,7 @@ fn merge_branch(branch: String, repository: &Repository) {
         if dirty {
             println!(
                 "\nMerge conflict detected, either fix the conflict and \
-                 \nuse `git commit --no-edit` commit this merge or use \
+                 \nuse `git commit --no-edit` to record and commit or use \
                  \n`git merge --abort` to quit this merge"
             );
             process::exit(1);
