@@ -21,16 +21,11 @@ Installing git-integrate is straightforward!
 
 1. [Install rust for your system if you have not done so](https://www.rust-lang.org/tools/install)
 2. Ensure Cargo is added to your $PATH and restart your terminal
-3. [Install pijul if you have not done so](https://pijul.org/manual/installing.html)
-4. Clone this project
+3. Install git-integrate by running
 ```bash
-pijul clone https://nest.pijul.com/tmiller/git-integrate
+cargo install --force --path .
 ```
-5. Install git-integrate by running
-```bash
-cargo install --path .
-```
-6. Then follow the steps below in Configuration
+4. Then follow the steps below in Configuration
 
 ## Configuration
 
@@ -54,20 +49,20 @@ git config --global integrate.github-token <insert token here>
 Simple scenario:
 ```bash
 # Parameters
-git integrate LABEL BRANCH
+git integrate MILESTONE BRANCH
 
 # Example
-git integrate "Deployed: Staging" deploy/staging
+git integrate 1024 release-candidate/1986-06-14-000
 git push --force origin deploy/staging
 ```
 
 Merge Conflict:
 ```bash
-git integrate "Deployed: Staging" deploy/staging
+git integrate 1024 release-candidate/1986-06-14-000
 
 # Fix merge conflict here
 
 git commit --no-edit
-git integrate "Deployed: Staging" deploy/staging
+git integrate 1024 release-candidate/1986-06-14-000
 git push --force origin deploy/staging
 ```
