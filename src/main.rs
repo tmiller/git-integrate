@@ -6,28 +6,22 @@ extern crate serde;
 extern crate serde_derive;
 
 mod git_extras;
+mod github;
 
 use clap::{App, Arg};
 use git2::{Config, Repository, Status};
 use git_extras::Repo;
-use graphql_client::{GraphQLQuery, Response};
 use std::process::{Command, ExitStatus};
 use std::{env, io, process};
 
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "src/github/schema.json",
-    query_path = "src/github/queries.graphql",
-    response_derives = "Debug,Clone"
-)]
-pub struct LabelBranches;
+use github::branches_by_milestone;
 
 fn main() {
     let opts = App::new("git-integrate")
         .arg(
-            Arg::with_name("label")
-                .value_name("LABEL")
-                .help("GitHub pull request label")
+            Arg::with_name("milestone")
+                .value_name("MILESTONE")
+                .help("GitHub milestone number")
                 .index(1),
         )
         .arg(
@@ -38,7 +32,10 @@ fn main() {
         )
         .get_matches();
 
-    let label = opts.value_of("label").expect("No github label provided");
+    let milestone = opts
+        .value_of("milestone")
+        .and_then(|x| x.trim().parse().ok())
+        .expect("No github label provided");
     let dest_branch = opts.value_of("branch").expect("No branch provided");
 
     let current_dir = match env::current_dir() {
@@ -77,7 +74,7 @@ fn main() {
         process::exit(1)
     }
 
-    let branches = match branches(github_token, repo, label) {
+    let branches = match branches_by_milestone(github_token, repo, milestone) {
         Ok(branches) => branches,
         Err(e) => panic!("{}", e),
     };
@@ -86,34 +83,6 @@ fn main() {
         println!("\nMerging {}", branch);
         merge_branch(branch, &repository);
     }
-}
-
-fn branches(token: String, repo: Repo, label: &str) -> Result<Vec<String>, reqwest::Error> {
-    let q = LabelBranches::build_query(label_branches::Variables {
-        owner: repo.owner,
-        name: repo.name,
-        label: label.to_string(),
-    });
-
-    let client = reqwest::Client::new();
-
-    let mut res = client
-        .post("https://api.github.com/graphql")
-        .bearer_auth(token)
-        .json(&q)
-        .send()?;
-
-    let response: Response<label_branches::ResponseData> = res.json()?;
-
-    Ok(response
-        .data
-        .and_then(|x| x.repository)
-        .and_then(|x| x.pull_requests.nodes)
-        .unwrap_or(vec![])
-        .iter()
-        .cloned()
-        .filter_map(|x| x.map(|y| y.head_ref_name))
-        .collect())
 }
 
 fn merge_branch(branch: String, repository: &Repository) {
