@@ -63,7 +63,6 @@ pub fn branches_by_milestone(
     });
 
     let client = reqwest::Client::new();
-
     let mut res = client
         .post("https://api.github.com/graphql")
         .bearer_auth(token)

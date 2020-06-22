@@ -12,7 +12,8 @@ use clap::{App, Arg};
 use git2::{Config, Repository, Status};
 use git_extras::Repo;
 use std::process::{Command, ExitStatus};
-use std::{env, io, process};
+use std::sync::mpsc;
+use std::{env, io, process, thread};
 
 use github::branches_by_milestone;
 
@@ -63,6 +64,15 @@ fn main() {
         .get_string("integrate.github-token")
         .expect("Could not find integrate.github-token in any git configuration file!");
 
+    let (tx, rx) = mpsc::channel();
+    thread::spawn(move || {
+        let branches = match branches_by_milestone(github_token, repo, milestone) {
+            Ok(branches) => branches,
+            Err(e) => panic!("{}", e),
+        };
+        tx.send(branches).unwrap();
+    });
+
     if !git_fetch().expect("Error fetching from remote").success() {
         process::exit(1)
     }
@@ -74,9 +84,9 @@ fn main() {
         process::exit(1)
     }
 
-    let branches = match branches_by_milestone(github_token, repo, milestone) {
+    let branches = match rx.recv() {
         Ok(branches) => branches,
-        Err(e) => panic!("{}", e),
+        Err(_) => panic!("Couldn't receive message from thread"),
     };
 
     for branch in branches {
