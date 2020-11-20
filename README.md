@@ -44,7 +44,7 @@ Or you can just run the following command:
 git config --global integrate.github-token <insert token here>
 ```
 
-git-integrate uses [git rerere](https://git-scm.com/docs/git-rerere) to resolve merge conflicts. To enable rerere, add the following to your `~/.gitconfig`:
+git-integrate uses [git rerere](https://git-scm.com/docs/git-rerere) to resolve merge conflicts. To enable rerere, add the following to your project's config in `<project_root>/git/config`:
 
 ```
 [rerere]
@@ -52,6 +52,12 @@ git-integrate uses [git rerere](https://git-scm.com/docs/git-rerere) to resolve 
 ```
 
 Or run the following command:
+
+```bash
+git config --local rerere.enabled true
+```
+
+To add the setting globally instead, run the following command:
 
 ```bash
 git config --global rerere.enabled true
