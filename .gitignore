@@ -8,3 +8,6 @@
 # graphviz outputs
 *.svg
 *.png
+
+# Jetbrains
+.idea/
